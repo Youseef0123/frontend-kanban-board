@@ -4,18 +4,18 @@
       "id": 1,
       "title": "API integration",
       "description": "Integrate third-party payment gateway API with error handling and retry logic.",
-      "column": "in_progress",
+      "column": "backlog",
       "priority": "high",
-      "order": 15,
+      "order": 12,
       "createdAt": "2024-01-10T09:00:00.000Z"
     },
     {
       "id": 2,
       "title": "Unit tests",
       "description": "Write unit tests for auth middleware and user service layer.",
-      "column": "backlog",
+      "column": "in_progress",
       "priority": "low",
-      "order": 11,
+      "order": 19,
       "createdAt": "2024-01-11T10:30:00.000Z"
     },
     {
@@ -42,7 +42,7 @@
       "description": "Profile settings, password change, notification preferences, and avatar upload.",
       "column": "in_progress",
       "priority": "low",
-      "order": 16,
+      "order": 20,
       "createdAt": "2024-01-14T08:30:00.000Z"
     },
     {
@@ -85,9 +85,9 @@
       "id": 10,
       "title": "Design system tokens",
       "description": "Define color, spacing, and typography tokens. Publish as a shared npm package.",
-      "column": "backlog",
+      "column": "review",
       "priority": "high",
-      "order": 10,
+      "order": 18,
       "createdAt": "2024-01-01T09:00:00.000Z"
     }
   ]
