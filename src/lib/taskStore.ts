@@ -2,7 +2,6 @@ import { readFileSync } from "fs";
 import path from "path";
 import type { Task } from "@/types/task";
 
-
 let tasks: Task[] = [];
 let initialized = false;
 
