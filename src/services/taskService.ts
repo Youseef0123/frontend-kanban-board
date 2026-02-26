@@ -1,10 +1,5 @@
-import axios from "axios";
-import type { Task, CreateTaskPayload, ColumnId } from "@/types/task";
-
-const api = axios.create({
-  baseURL: "/api",
-  headers: { "Content-Type": "application/json" },
-});
+import { useTaskDataStore } from '@/store/taskDataStore';
+import type { Task, CreateTaskPayload, ColumnId } from '@/types/task';
 
 export interface FetchTasksParams {
   column: ColumnId;
@@ -24,53 +19,52 @@ export interface TaskPage {
 export async function fetchTasksByColumn(
   params: FetchTasksParams,
 ): Promise<TaskPage> {
-  const { column, search = "", page = 1, limit = 5 } = params;
+  const { column, search = '', page = 1, limit = 5 } = params;
+  const { tasks } = useTaskDataStore.getState();
 
-  const queryParams: Record<string, string | number> = {
-    column,
-    _page: page,
-    _limit: limit,
-    _sort: "order",
-    _order: "asc",
-  };
+  let filtered = tasks.filter((t) => t.column === column);
 
   if (search.trim()) {
-    queryParams["q"] = search.trim();
+    const lower = search.trim().toLowerCase();
+    filtered = filtered.filter(
+      (t) =>
+        t.title.toLowerCase().includes(lower) ||
+        t.description.toLowerCase().includes(lower),
+    );
   }
 
-  const response = await api.get<Task[]>("/tasks", { params: queryParams });
-  const total = parseInt(response.headers["x-total-count"] ?? "0", 10);
+  filtered = [...filtered].sort((a, b) => a.order - b.order);
 
-  return {
-    tasks: response.data,
-    total,
-    page,
-    limit,
-    hasMore: page * limit < total,
-  };
+  const total = filtered.length;
+  const start = (page - 1) * limit;
+  const paginated = filtered.slice(start, start + limit);
+
+  return { tasks: paginated, total, page, limit, hasMore: page * limit < total };
 }
 
 export async function fetchTaskById(id: number): Promise<Task> {
-  const response = await api.get<Task>(`/tasks/${id}`);
-  return response.data;
+  const { tasks } = useTaskDataStore.getState();
+  const task = tasks.find((t) => t.id === id);
+  if (!task) throw new Error(`Task ${id} not found`);
+  return task;
 }
 
 export async function createTask(payload: CreateTaskPayload): Promise<Task> {
-  const response = await api.post<Task>("/tasks", {
-    ...payload,
-    createdAt: new Date().toISOString(),
-  });
-  return response.data;
+  const { addTask } = useTaskDataStore.getState();
+  return addTask(payload);
 }
 
 export async function updateTask(
   id: number,
-  payload: Partial<Omit<Task, "id">>,
+  payload: Partial<Omit<Task, 'id'>>,
 ): Promise<Task> {
-  const response = await api.patch<Task>(`/tasks/${id}`, payload);
-  return response.data;
+  const { updateTask: update } = useTaskDataStore.getState();
+  const updated = update(id, payload);
+  if (!updated) throw new Error(`Task ${id} not found`);
+  return updated;
 }
 
 export async function deleteTask(id: number): Promise<void> {
-  await api.delete(`/tasks/${id}`);
+  const { removeTask } = useTaskDataStore.getState();
+  removeTask(id);
 }

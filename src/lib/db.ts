@@ -15,7 +15,7 @@ export async function ensureSchema(): Promise<void> {
       id          SERIAL PRIMARY KEY,
       title       TEXT        NOT NULL,
       description TEXT        NOT NULL DEFAULT '',
-      column      TEXT        NOT NULL DEFAULT 'backlog',
+      "column"    TEXT        NOT NULL DEFAULT 'backlog',
       priority    TEXT        NOT NULL DEFAULT 'medium',
       "order"     INTEGER     NOT NULL DEFAULT 0,
       created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -27,7 +27,7 @@ export async function ensureSchema(): Promise<void> {
   const count = Number((rows[0] as { cnt: string }).cnt);
   if (count === 0) {
     await sql`
-      INSERT INTO tasks (title, description, column, priority, "order", created_at) VALUES
+      INSERT INTO tasks (title, description, "column", priority, "order", created_at) VALUES
         ('API integration',      'Integrate third-party payment gateway API with error handling and retry logic.', 'backlog',     'high',   12, '2024-01-10T09:00:00.000Z'),
         ('Unit tests',           'Write unit tests for auth middleware and user service layer.',                   'in_progress', 'low',    19, '2024-01-11T10:30:00.000Z'),
         ('Performance audit',    'Run Lighthouse audit, fix LCP issues, lazy-load below-the-fold images.',        'in_progress', 'low',    17, '2024-01-12T11:00:00.000Z'),

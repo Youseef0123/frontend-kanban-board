@@ -28,13 +28,13 @@ function rowToTask(row: DbRow): Task {
 
 export async function getTasks(): Promise<Task[]> {
   await ensureSchema();
-  const rows = (await sql`SELECT * FROM tasks ORDER BY "order" ASC`) as DbRow[];
+  const rows = (await sql`SELECT id, title, description, "column", priority, "order", created_at FROM tasks ORDER BY "order" ASC`) as DbRow[];
   return rows.map(rowToTask);
 }
 
 export async function getTaskById(id: number): Promise<Task | null> {
   await ensureSchema();
-  const rows = (await sql`SELECT * FROM tasks WHERE id = ${id}`) as DbRow[];
+  const rows = (await sql`SELECT id, title, description, "column", priority, "order", created_at FROM tasks WHERE id = ${id}`) as DbRow[];
   if (rows.length === 0) return null;
   return rowToTask(rows[0]);
 }
@@ -44,9 +44,9 @@ export async function createTask(
 ): Promise<Task> {
   await ensureSchema();
   const rows = (await sql`
-    INSERT INTO tasks (title, description, column, priority, "order")
+    INSERT INTO tasks (title, description, "column", priority, "order")
     VALUES (${data.title}, ${data.description}, ${data.column}, ${data.priority}, ${data.order})
-    RETURNING *
+    RETURNING id, title, description, "column", priority, "order", created_at
   `) as DbRow[];
   return rowToTask(rows[0]);
 }
@@ -68,11 +68,11 @@ export async function updateTask(
     UPDATE tasks
     SET title       = ${title},
         description = ${description},
-        column      = ${column},
+        "column"    = ${column},
         priority    = ${priority},
         "order"     = ${order}
     WHERE id = ${id}
-    RETURNING *
+    RETURNING id, title, description, "column", priority, "order", created_at
   `) as DbRow[];
 
   if (rows.length === 0) return null;
