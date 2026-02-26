@@ -1,5 +1,5 @@
-import { useTaskDataStore } from '@/store/taskDataStore';
-import type { Task, CreateTaskPayload, ColumnId } from '@/types/task';
+import { useTaskDataStore } from "@/store/taskDataStore";
+import type { Task, CreateTaskPayload, ColumnId } from "@/types/task";
 
 export interface FetchTasksParams {
   column: ColumnId;
@@ -19,7 +19,7 @@ export interface TaskPage {
 export async function fetchTasksByColumn(
   params: FetchTasksParams,
 ): Promise<TaskPage> {
-  const { column, search = '', page = 1, limit = 5 } = params;
+  const { column, search = "", page = 1, limit = 5 } = params;
   const { tasks } = useTaskDataStore.getState();
 
   let filtered = tasks.filter((t) => t.column === column);
@@ -39,7 +39,13 @@ export async function fetchTasksByColumn(
   const start = (page - 1) * limit;
   const paginated = filtered.slice(start, start + limit);
 
-  return { tasks: paginated, total, page, limit, hasMore: page * limit < total };
+  return {
+    tasks: paginated,
+    total,
+    page,
+    limit,
+    hasMore: page * limit < total,
+  };
 }
 
 export async function fetchTaskById(id: number): Promise<Task> {
@@ -56,7 +62,7 @@ export async function createTask(payload: CreateTaskPayload): Promise<Task> {
 
 export async function updateTask(
   id: number,
-  payload: Partial<Omit<Task, 'id'>>,
+  payload: Partial<Omit<Task, "id">>,
 ): Promise<Task> {
   const { updateTask: update } = useTaskDataStore.getState();
   const updated = update(id, payload);
