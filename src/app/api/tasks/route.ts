@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const order = searchParams.get("_order") ?? "asc";
   const q = searchParams.get("q");
 
-  let filtered: Task[] = getTasks();
+  let filtered: Task[] = await getTasks();
 
   if (column) {
     filtered = filtered.filter((t) => t.column === column);
@@ -51,6 +51,6 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const newTask = createTask(body);
+  const newTask = await createTask(body);
   return NextResponse.json(newTask, { status: 201 });
 }

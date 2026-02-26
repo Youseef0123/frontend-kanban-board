@@ -1,55 +1,88 @@
-import { readFileSync } from "fs";
-import path from "path";
+import { sql, ensureSchema } from "@/lib/db";
 import type { Task } from "@/types/task";
 
-let tasks: Task[] = [];
-let initialized = false;
+type DbRow = {
+  id: number;
+  title: string;
+  description: string;
+  column: string;
+  priority: string;
+  order: number;
+  created_at: Date | string;
+};
 
-function initStore(): void {
-  if (initialized) return;
-  try {
-    const dbPath = path.join(process.cwd(), "db.json");
-    const data = JSON.parse(readFileSync(dbPath, "utf-8"));
-    tasks = Array.isArray(data.tasks) ? data.tasks : [];
-  } catch {
-    tasks = [];
-  }
-  initialized = true;
+function rowToTask(row: DbRow): Task {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    column: row.column as Task["column"],
+    priority: row.priority as Task["priority"],
+    order: row.order,
+    createdAt:
+      row.created_at instanceof Date
+        ? row.created_at.toISOString()
+        : String(row.created_at),
+  };
 }
 
-export function getTasks(): Task[] {
-  initStore();
-  return tasks;
+export async function getTasks(): Promise<Task[]> {
+  await ensureSchema();
+  const rows = await sql`SELECT * FROM tasks ORDER BY "order" ASC` as DbRow[];
+  return rows.map(rowToTask);
 }
 
-export function getTaskById(id: number): Task | undefined {
-  initStore();
-  return tasks.find((t) => t.id === id);
+export async function getTaskById(id: number): Promise<Task | null> {
+  await ensureSchema();
+  const rows = await sql`SELECT * FROM tasks WHERE id = ${id}` as DbRow[];
+  if (rows.length === 0) return null;
+  return rowToTask(rows[0]);
 }
 
-export function createTask(data: Omit<Task, "id">): Task {
-  initStore();
-  const maxId = tasks.length > 0 ? Math.max(...tasks.map((t) => t.id)) : 0;
-  const newTask: Task = { ...data, id: maxId + 1 };
-  tasks.push(newTask);
-  return newTask;
+export async function createTask(
+  data: Omit<Task, "id" | "createdAt">,
+): Promise<Task> {
+  await ensureSchema();
+  const rows = await sql`
+    INSERT INTO tasks (title, description, column, priority, "order")
+    VALUES (${data.title}, ${data.description}, ${data.column}, ${data.priority}, ${data.order})
+    RETURNING *
+  ` as DbRow[];
+  return rowToTask(rows[0]);
 }
 
-export function updateTask(
+export async function updateTask(
   id: number,
-  data: Partial<Omit<Task, "id">>,
-): Task | null {
-  initStore();
-  const idx = tasks.findIndex((t) => t.id === id);
-  if (idx === -1) return null;
-  tasks[idx] = { ...tasks[idx], ...data };
-  return tasks[idx];
+  data: Partial<Omit<Task, "id" | "createdAt">>,
+): Promise<Task | null> {
+  const existing = await getTaskById(id);
+  if (!existing) return null;
+
+  const title       = data.title       ?? existing.title;
+  const description = data.description ?? existing.description;
+  const column      = data.column      ?? existing.column;
+  const priority    = data.priority    ?? existing.priority;
+  const order       = data.order       ?? existing.order;
+
+  const rows = await sql`
+    UPDATE tasks
+    SET title       = ${title},
+        description = ${description},
+        column      = ${column},
+        priority    = ${priority},
+        "order"     = ${order}
+    WHERE id = ${id}
+    RETURNING *
+  ` as DbRow[];
+
+  if (rows.length === 0) return null;
+  return rowToTask(rows[0]);
 }
 
-export function removeTask(id: number): boolean {
-  initStore();
-  const idx = tasks.findIndex((t) => t.id === id);
-  if (idx === -1) return false;
-  tasks.splice(idx, 1);
-  return true;
+export async function removeTask(id: number): Promise<boolean> {
+  await ensureSchema();
+  const rows = await sql`
+    DELETE FROM tasks WHERE id = ${id} RETURNING id
+  ` as { id: number }[];
+  return rows.length > 0;
 }

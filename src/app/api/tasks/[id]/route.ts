@@ -5,7 +5,7 @@ type Params = { params: { id: string } };
 
 export async function GET(_req: NextRequest, { params }: Params) {
   const id = parseInt(params.id, 10);
-  const task = getTaskById(id);
+  const task = await getTaskById(id);
   if (!task) {
     return NextResponse.json({ message: "Task not found" }, { status: 404 });
   }
@@ -15,7 +15,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 export async function PATCH(request: NextRequest, { params }: Params) {
   const id = parseInt(params.id, 10);
   const body = await request.json();
-  const updated = updateTask(id, body);
+  const updated = await updateTask(id, body);
   if (!updated) {
     return NextResponse.json({ message: "Task not found" }, { status: 404 });
   }
@@ -24,7 +24,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
   const id = parseInt(params.id, 10);
-  const ok = removeTask(id);
+  const ok = await removeTask(id);
   if (!ok) {
     return NextResponse.json({ message: "Task not found" }, { status: 404 });
   }
